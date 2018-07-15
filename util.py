@@ -1,5 +1,10 @@
+import re
+
 def getWordList(line):
     return line.strip().split()
+
+def extractWord(word):
+    return re.sub('[^a-z]', '', word)
 
 def getTopFrequence(top=100):
     freq = open('./freq.txt', "r")
