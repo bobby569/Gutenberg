@@ -102,10 +102,37 @@ class Parser:
         res.append(cnt)
         return res[1:]
 
-    # 4a
-    def getChapterQuoteAppears(self):
+    # 4
+    # In order to keep relatively small buffer,
+    # at most one period can appear in quote.
+    def getChapterQuoteAppears(self, quote):
+        quote = quote.lower()
+        txt = open(self.filename, "r")
+        ch, buffer = "", ""
+
+        for line in txt:
+            if line.startswith("Chapter"):
+                ch = util.extractChapterNumber(line)
+                buffer = ""
+            buffer += line.lower().strip() + " "
+            if quote in buffer:
+                txt.close()
+                return int(ch)
+            try:
+                period = buffer.index('.')
+                buffer = buffer[period+1:]
+            except:
+                pass
+        txt.close()
+        return -1
+
+    # 5
+    def getAutocompleteSentence(self, startOfSentence):
         pass
 
+    # 6
+    def findClosestMatchingQuote(self, string):
+        pass
 
 
 if __name__ == "__main__":
@@ -122,3 +149,7 @@ if __name__ == "__main__":
     print(p.get20LeastFrequentWords())
     print("-----------3a-----------")
     print(p.getFrequencyOfWord("prejudice"))
+    print("-----------4a-----------")
+    print(p.getChapterQuoteAppears("It is a truth universally acknowledged, \
+                                   that a single man in possession of a good fortune, \
+                                   must be in want of a wife."))
