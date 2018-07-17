@@ -1,4 +1,20 @@
+import random
 import re
+
+class Trie:
+	def __init__(self):
+		self.trie = {}
+
+	def insert(self, word):
+		tmp = self.trie
+		for ch in word:
+			tmp = tmp.setdefault(ch, {})
+
+###############################################
+#
+#	End of Class. Begining of helper functions.
+#
+###############################################
 
 def getWordList(line):
     return line.strip().lower().split()
@@ -21,3 +37,6 @@ def getTopFrequence(top=100):
 
     freq.close()
     return word_set
+
+def getRandomFrom(seq):
+    return random.sample(seq, 1)[0] if seq else None

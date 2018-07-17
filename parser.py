@@ -1,4 +1,5 @@
 import util
+import collections
 
 class Parser:
 
@@ -24,6 +25,24 @@ class Parser:
         self.word_dict = word_dict
         return word_dict
 
+
+    def getNextWordDict(self):
+        txt = open(self.filename, "r")
+
+        prev_word, next_words = "", collections.defaultdict(set)
+        for line in txt:
+            words = util.getWordList(line)
+            words.insert(0, prev_word)
+            prev_word = words[-1]
+
+            for x, y in zip(words, words[1:]):
+                if x.isalpha() and y.isalpha():
+                    next_words[x].add(y)
+
+        txt.close()
+        return next_words
+
+
     # 2a
     def getTotalNumberOfWords(self):
         txt = open(self.filename, "r")
@@ -43,7 +62,7 @@ class Parser:
         for line in txt:
             word_list = util.getWordList(line)
             for word in word_list:
-                word_set.add(word.lower())
+                word_set.add(word)
 
         txt.close()
         return len(word_set)
@@ -126,30 +145,24 @@ class Parser:
         txt.close()
         return -1
 
-    # 5
+    # 5a
+    def generateSentence(self):
+        next_words = self.getNextWordDict()
+        sentence = ['the']
+
+        while len(sentence) < 20:
+            last_word = sentence[-1]
+            next = util.getRandomFrom(next_words[last_word])
+            if not next:
+                break
+            sentence.append(next)
+
+        return ' '.join(sentence)
+
+    # 6a
     def getAutocompleteSentence(self, startOfSentence):
         pass
 
-    # 6
+    # 7a
     def findClosestMatchingQuote(self, string):
         pass
-
-
-if __name__ == "__main__":
-    p = Parser('./1342.txt')
-    print("-----------2a-----------")
-    print(p.getTotalNumberOfWords())
-    print("-----------2b-----------")
-    print(p.getTotalUniqueWords())
-    print("-----------2c-----------")
-    print(p.get20MostFrequentWords())
-    print("-----------2d-----------")
-    print(p.get20MostInterestingFrequentWords(150))
-    print("-----------2e-----------")
-    print(p.get20LeastFrequentWords())
-    print("-----------3a-----------")
-    print(p.getFrequencyOfWord("prejudice"))
-    print("-----------4a-----------")
-    print(p.getChapterQuoteAppears("It is a truth universally acknowledged, \
-                                   that a single man in possession of a good fortune, \
-                                   must be in want of a wife."))
