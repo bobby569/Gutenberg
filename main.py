@@ -19,4 +19,7 @@ if __name__ == "__main__":
     print("-----------5a-----------")
     print(p.generateSentence())
     print("-----------6a-----------")
-    print(p.getAutocompleteSentence())
+    res = p.getAutocompleteSentence("I do not")
+    for s in res:
+        print(s)
+    print("-----------7a-----------")
