@@ -178,5 +178,27 @@ class Parser:
         return ["%s %s" % (startOfSentence, s) for s in res]
 
     # 7a
-    def findClosestMatchingQuote(self, string):
-        pass
+    def findClosestMatchingQuote(self, quote):
+        txt = open(self.filename, "r")
+
+        ch, buffer = "", ""
+        curr = ["", "", 0]  # [chapter, actual-quote, similarity]
+
+        for line in txt:
+            if line.startswith("Chapter"):
+                ch = util.extractChapterNumber(line)
+                buffer = ""
+                continue
+            buffer += line.lower().strip() + " "
+            while True:
+                idx = util.hasEOS(buffer)
+                if idx == len(buffer):
+                    break
+                sentence = buffer[:idx+1].strip()
+                sim = util.calcSimilarity(quote, sentence)
+                if sim > curr[2]:
+                    curr = [ch, sentence, sim]
+                buffer = buffer[idx+1:].lstrip()
+
+        txt.close()
+        return "%s - Chapter %s" % (curr[1], curr[0])

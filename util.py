@@ -1,4 +1,4 @@
-import random, re
+import math, random, re
 
 class Trie:
 	def __init__(self):
@@ -56,3 +56,7 @@ def hasEOS(s):
 	question = s.index('?') if '?' in s else length
 
 	return min([period, exclmation, question])
+
+def calcSimilarity(s1, s2):
+	set1, set2 = set(getWordList(s1)), set(getWordList(s2))
+	return len(set1.intersection(set2))

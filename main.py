@@ -23,3 +23,4 @@ if __name__ == "__main__":
     for s in res:
         print(s)
     print("-----------7a-----------")
+    print(p.findClosestMatchingQuote("universally acknowledged"))
