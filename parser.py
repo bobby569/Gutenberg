@@ -15,8 +15,7 @@ class Parser:
 
         word_dict = {}
         for line in txt:
-            word_list = util.getWordList(line)
-            for word in word_list:
+            for word in util.getWordList(line):
                 for w in util.extractWord(word):
                     if w:
                         word_dict[w] = word_dict.get(w, 0) + 1
