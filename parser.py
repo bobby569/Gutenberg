@@ -1,5 +1,9 @@
+import collections
+import heapq
+from typing import List, Tuple
+
 import util
-import collections, heapq
+from trie import Trie
 
 class Parser:
 
@@ -10,64 +14,56 @@ class Parser:
         self.setWordDict()
 
 
-    def setWordDict(self):
-        txt = open(self.filename, "r")
-
+    def setWordDict(self) -> None:
         word_dict = {}
-        for line in txt:
-            for word in util.getWordList(line):
-                for w in util.extractWord(word):
-                    if w:
-                        word_dict[w] = word_dict.get(w, 0) + 1
-
-        txt.close()
+        with open(self.filename, "r") as fd:
+            for line in fd:
+                for word in util.getWordList(line):
+                    for w in util.extractWords(word):
+                        if w:
+                            word_dict[w] = word_dict.get(w, 0) + 1
         self.word_dict = word_dict
 
 
-    def getNextWordDict(self):
-        txt = open(self.filename, "r")
-
+    def getNextWordDict(self) -> collections.defaultdict:
         prev_word, next_words = "", collections.defaultdict(set)
-        for line in txt:
-            words = util.getWordList(line)
-            words.insert(0, prev_word)
-            prev_word = words[-1]
+        with open(self.filename, "r") as fd:
+            for line in fd:
+                words = [prev_word] + util.getWordList(line)
+                prev_word = words[-1]
 
-            for x, y in zip(words, words[1:]):
-                if x.isalpha() and y.isalpha():
-                    next_words[x].add(y)
-
-        txt.close()
+                for x, y in zip(words, words[1:]):
+                    if x.isalpha() and y.isalpha():
+                        next_words[x].add(y)
+        del next_words[""]
         return next_words
 
 
-    def getWordTrie(self):
+    def getWordTrie(self) -> Trie:
         if self.word_trie:
             return self.word_trie
 
-        txt = open(self.filename, "r")
+        buffer, word_trie = "", Trie()
+        with open(self.filename, "r") as fd:
+            for line in fd:
+                if line.startswith("Chapter"):
+                    buffer = ""
+                    continue
+                buffer += line.lower().strip() + " "
 
-        buffer, word_trie = "", util.Trie()
-        for line in txt:
-            if line.startswith("Chapter"):
-                buffer = ""
-                continue
-            buffer += line.lower().strip() + " "
+                while True:
+                    idx = util.hasEOS(buffer)
+                    if idx == len(buffer):
+                        break
+                    sentence = buffer[:idx+1]
+                    buffer = buffer[idx+1:].lstrip()
+                    word_trie.insert(sentence.split())
 
-            while True:
-                idx = util.hasEOS(buffer)
-                if idx == len(buffer):
-                    break
-                sentence = buffer[:idx+1]
-                buffer = buffer[idx+1:].lstrip()
-                word_trie.insert(sentence.split())
-
-        txt.close()
         self.word_trie = word_trie
         return word_trie
 
 
-    def printAllSentence(self, ptr, sentence, res):
+    def printAllSentence(self, ptr, sentence, res) -> None:
         if not ptr:
             res.append(sentence.strip())
             return
@@ -76,25 +72,25 @@ class Parser:
 
 
     # 2a
-    def getTotalNumberOfWords(self):
+    def getTotalNumberOfWords(self) -> int:
         return sum(self.word_dict.values())
 
     # 2b
-    def getTotalUniqueWords(self):
+    def getTotalUniqueWords(self) -> int:
         return len(self.word_dict)
 
     # 2c
-    def get20MostFrequentWords(self):
+    def get20MostFrequentWords(self) -> List[Tuple[str, int]]:
         h = []
         for k, v in self.word_dict.items():
             if v > 3:
                 heapq.heappush(h, (v, k))
                 if len(h) > 20:
                     heapq.heappop(h)
-        return sorted([[k, v] for v, k in h], key=lambda x: x[1], reverse=True)
+        return sorted([[k, v] for v, k in h], key=lambda x: -x[1])
 
     # 2d
-    def get20MostInterestingFrequentWords(self, no_common=100):
+    def get20MostInterestingFrequentWords(self, no_common=100) -> List[Tuple[str, int]]:
         freq_word = util.getTopFrequence(no_common)
 
         h = []
@@ -103,10 +99,10 @@ class Parser:
                 heapq.heappush(h, (v, k))
                 if len(h) > 20:
                     heapq.heappop(h)
-        return sorted([[k, v] for v, k in h], key=lambda x: x[1], reverse=True)
+        return sorted([[k, v] for v, k in h], key=lambda x: -x[1])
 
     # 2e
-    def get20LeastFrequentWords(self):
+    def get20LeastFrequentWords(self) -> List[Tuple[str, int]]:
         h = []
         for k, v in self.word_dict.items():
             if v <= 3:
@@ -116,58 +112,50 @@ class Parser:
         return sorted([[k, -v] for v, k in h], key=lambda x: x[1])
 
     # 3a
-    def getFrequencyOfWord(self, word):
-        txt = open(self.filename, "r")
+    def getFrequencyOfWord(self, word: str) -> List[int]:
         cnt, res = 0, []
-
-        for line in txt:
-            if line.startswith("Chapter"):
-                res.append(cnt)
-                cnt = 0
-            else:
-                cnt += line.count(word)
-
-        txt.close()
+        with open(self.filename, "r") as fd:
+            for line in fd:
+                if line.startswith("Chapter"):
+                    res.append(cnt)
+                    cnt = 0
+                else:
+                    cnt += line.count(word)
         res.append(cnt)
         return res[1:]
 
     # 4
     # In order to keep relatively small buffer,
     # at most one period can appear in quote.
-    def getChapterQuoteAppears(self, quote):
-        quote = quote.lower()
-        txt = open(self.filename, "r")
-        ch, buffer = "", ""
-
-        for line in txt:
-            if line.startswith("Chapter"):
-                ch = util.extractChapterNumber(line)
-                buffer = ""
-            buffer += line.lower().strip() + " "
-            if quote in buffer:
-                txt.close()
-                return int(ch)
-            idx = buffer.index('.') if '.' in buffer else -1
-            buffer = buffer[idx+1:]
-        txt.close()
+    def getChapterQuoteAppears(self, quote: str) -> int:
+        ch, buffer, quote = "", "", quote.lower()
+        with open(self.filename, "r") as fd:
+            for line in fd:
+                if line.startswith("Chapter"):
+                    ch = util.extractChapterNumber(line)
+                    buffer = ""
+                buffer += line.lower().strip() + " "
+                if quote in buffer:
+                    return int(ch)
+                idx = buffer.find('.')
+                buffer = buffer[idx+1:]
         return -1
 
     # 5a
-    def generateSentence(self):
-        next_words = self.getNextWordDict()
-        sentence = ['the']
+    def generateSentence(self) -> str:
+        sentence, next_words = ['the'], self.getNextWordDict()
 
-        while len(sentence) < 20:
+        for _ in range(19):
             last_word = sentence[-1]
-            next = util.getRandomFrom(next_words[last_word])
-            if not next:
+            _next = util.getRandomFrom(next_words[last_word])
+            if not _next:
                 break
             sentence.append(next)
 
         return ' '.join(sentence)
 
     # 6a
-    def getAutocompleteSentence(self, startOfSentence):
+    def getAutocompleteSentence(self, startOfSentence: str) -> List[str]:
         word_trie = self.getWordTrie()
         pieces = util.getWordList(startOfSentence)
         ptr = word_trie.search(pieces)
@@ -177,27 +165,24 @@ class Parser:
         return ["%s %s" % (startOfSentence, s) for s in res]
 
     # 7a
-    def findClosestMatchingQuote(self, quote):
-        txt = open(self.filename, "r")
-
+    def findClosestMatchingQuote(self, quote: str):
         ch, buffer = "", ""
         curr = ["", "", 0]  # [chapter, actual-quote, similarity]
 
-        for line in txt:
-            if line.startswith("Chapter"):
-                ch = util.extractChapterNumber(line)
-                buffer = ""
-                continue
-            buffer += line.lower().strip() + " "
-            while True:
-                idx = util.hasEOS(buffer)
-                if idx == len(buffer):
-                    break
-                sentence = buffer[:idx+1].strip()
-                sim = util.calcSimilarity(quote, sentence)
-                if sim > curr[2]:
-                    curr = [ch, sentence, sim]
-                buffer = buffer[idx+1:].lstrip()
-
-        txt.close()
+        with open(self.filename, "r") as fd:
+            for line in fd:
+                if line.startswith("Chapter"):
+                    ch = util.extractChapterNumber(line)
+                    buffer = ""
+                    continue
+                buffer += line.lower().strip() + " "
+                while True:
+                    idx = util.hasEOS(buffer)
+                    if idx == len(buffer):
+                        break
+                    sentence = buffer[:idx+1].strip()
+                    sim = util.calcSimilarity(quote, sentence)
+                    if sim > curr[2]:
+                        curr = [ch, sentence, sim]
+                    buffer = buffer[idx+1:].lstrip()
         return "%s - Chapter %s" % (curr[1], curr[0])
